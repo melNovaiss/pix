@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de QR Code com qrcode.js</title>
+    <!-- Incluir o Bootstrap para estilos básicos -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body>
+    <div class="container mt-5">
+        <div class="row">
+            <div class="col-md-6">
+                <h3>Gerador de QR Code</h3>
+                <form id="qrForm">
+                    <div class="mb-3">
+                        <label for="pixKey" class="form-label">Chave PIX</label>
+                        <input type="text" class="form-control" id="pixKey" placeholder="cpf, celular, email, chave aleatória">
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Descrição (opcional)</label>
+                        <input type="text" class="form-control" id="description">
+                    </div>
+                    <div class="mb-3">
+                        <label for="merchantName" class="form-label">Nome do Beneficiário - até 25 letras</label>
+                        <input type="text" class="form-control" id="merchantName" placeholder=""
+                            maxlength="25">
+                    </div>
+                    <div class="mb-3">
+                        <label for="merchantCity" class="form-label">Cidade do Beneficiário - até 15 letras</label>
+                        <input type="text" class="form-control" id="merchantCity" placeholder=""
+                            maxlength="15">
+                    </div>
+                    <div class="mb-3">
+                        <label for="amount" class="form-label">Valor (opcional)</label>
+                        <input type="text" class="form-control" id="amount" placeholder="0,00">
+                    </div>
+                    <div class="mb-3">
+                        <label for="txid" class="form-label">Código da Transferência (opcional) - até 20
+                            letras/números</label>
+                        <input type="text" class="form-control" id="txid" placeholder="PAGAMENTO1234"
+                            maxlength="20">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Gerar QR Code</button>
+                </form>
+            </div>
+            <div class="col-md-6">
+                <div class="col-12 d-none" id="qrcodeContainer">
+                    <div id="qrcode"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Incluir jQuery e qrcode.js -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
+    <!-- Incluir Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>
+
+<script>
+    class Pix {
+        constructor(pixKey, description, merchantName, merchantCity, txid, amount) {
+            this.pixKey = pixKey;
+            this.description = description; // Adicionando o campo description
+            this.merchantName = merchantName;
+            this.merchantCity = merchantCity;
+            this.txid = txid;
+            this.amount = parseFloat(amount).toFixed(2);
+
+            this.ID_PAYLOAD_FORMAT_INDICATOR = "00";
+            this.ID_MERCHANT_ACCOUNT_INFORMATION = "26";
+            this.ID_MERCHANT_ACCOUNT_INFORMATION_GUI = "00";
+            this.ID_MERCHANT_ACCOUNT_INFORMATION_KEY = "01";
+            this.ID_MERCHANT_ACCOUNT_INFORMATION_DESCRIPTION = "02";
+            this.ID_MERCHANT_CATEGORY_CODE = "52";
+            this.ID_TRANSACTION_CURRENCY = "53";
+            this.ID_TRANSACTION_AMOUNT = "54";
+            this.ID_COUNTRY_CODE = "58";
+            this.ID_MERCHANT_NAME = "59";
+            this.ID_MERCHANT_CITY = "60";
+            this.ID_ADDITIONAL_DATA_FIELD_TEMPLATE = "62";
+            this.ID_ADDITIONAL_DATA_FIELD_TEMPLATE_TXID = "05";
+            this.ID_CRC16 = "63";
+        }
+
+        getValue(id, value) {
+            const size = String(value.length).padStart(2, "0");
+            return id + size + value;
+        }
+
+        getMerchantAccountInfo() {
+            const gui = this.getValue(
+                this.ID_MERCHANT_ACCOUNT_INFORMATION_GUI,
+                "br.gov.bcb.pix"
+            );
+            const key = this.getValue(
+                this.ID_MERCHANT_ACCOUNT_INFORMATION_KEY,
+                this.pixKey
+            );
+            const description = this.getValue(
+                this.ID_MERCHANT_ACCOUNT_INFORMATION_DESCRIPTION,
+                this.description
+            );
+
+            return this.getValue(
+                this.ID_MERCHANT_ACCOUNT_INFORMATION,
+                gui + key + description
+            );
+        }
+
+        getAdditionalDataFieldTemplate() {
+            const txid = this.getValue(
+                this.ID_ADDITIONAL_DATA_FIELD_TEMPLATE_TXID,
+                this.txid
+            );
+            return this.getValue(this.ID_ADDITIONAL_DATA_FIELD_TEMPLATE, txid);
+        }
+
+        getPayload() {
+            let payload = this.getValue(this.ID_PAYLOAD_FORMAT_INDICATOR, "01") +
+                this.getMerchantAccountInfo() +
+                this.getValue(this.ID_MERCHANT_CATEGORY_CODE, "0000") +
+                this.getValue(this.ID_TRANSACTION_CURRENCY, "986") +
+                this.getValue(this.ID_TRANSACTION_AMOUNT, this.amount) +
+                this.getValue(this.ID_COUNTRY_CODE, "BR") +
+                this.getValue(this.ID_MERCHANT_NAME, this.merchantName) +
+                this.getValue(this.ID_MERCHANT_CITY, this.merchantCity) +
+                this.getAdditionalDataFieldTemplate();
+
+            payload += this.getCRC16(payload);
+            return payload;
+        }
+
+        getCRC16(payload) {
+            function ord(str) {
+                return str.charCodeAt(0);
+            }
+            function dechex(number) {
+                if (number < 0) {
+                    number = 0xffffffff + number + 1;
+                }
+                return parseInt(number, 10).toString(16);
+            }
+
+            payload = payload + this.ID_CRC16 + "04";
+
+            let polinomio = 0x1021;
+            let resultado = 0xffff;
+            let length;
+
+            if ((length = payload.length) > 0) {
+                for (let offset = 0; offset < length; offset++) {
+                    resultado ^= ord(payload[offset]) << 8;
+                    for (let bitwise = 0; bitwise < 8; bitwise++) {
+                        if ((resultado <<= 1) & 0x10000) resultado ^= polinomio;
+                        resultado &= 0xffff;
+                    }
+                }
+            }
+
+            return this.ID_CRC16 + "04" + dechex(resultado).toUpperCase();
+        }
+
+        generateQRCode() {
+            const payload = this.getPayload();
+            console.log('Generated Payload:', payload);
+
+            new QRCode(document.getElementById("qrcode"), {
+                text: payload,
+                width: 256,
+                height: 256,
+            });
+
+            $('#qrcodeContainer').removeClass('d-none');
+        }
+    }
+
+    $(document).ready(function () {
+        $('#qrForm').submit(function (event) {
+            event.preventDefault();
+
+            var pixKey = $('#pixKey').val();
+            var description = $('#description').val();
+            var merchantName = $('#merchantName').val();
+            var merchantCity = $('#merchantCity').val();
+            var txid = $('#txid').val();
+
+            // Verifica se o campo amount não está vazio
+            var amount = $('#amount').val() ? parseInt($('#amount').val()) : 0;
+
+            var pix = new Pix(pixKey, description, merchantName, merchantCity, txid, amount);
+            pix.generateQRCode();
+        });
+
+    });
+</script>
