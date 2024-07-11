@@ -10,7 +10,7 @@
 </head>
 
 <body>
-    <div class="container mt-5">
+    <div class="container mt-2">
         <div class="row">
             <div class="col-md-6">
                 <h3>Gerador de QR Code</h3>
@@ -69,7 +69,11 @@
             this.merchantName = merchantName;
             this.merchantCity = merchantCity;
             this.txid = txid;
-            this.amount = parseFloat(amount).toFixed(2);
+            if (parseFloat(amount) === 0.00) {
+                this.amount = "";
+            } else {
+                this.amount = parseFloat(amount).toFixed(2);
+            }
 
             this.ID_PAYLOAD_FORMAT_INDICATOR = "00";
             this.ID_MERCHANT_ACCOUNT_INFORMATION = "26";
@@ -124,9 +128,14 @@
             let payload = this.getValue(this.ID_PAYLOAD_FORMAT_INDICATOR, "01") +
                 this.getMerchantAccountInfo() +
                 this.getValue(this.ID_MERCHANT_CATEGORY_CODE, "0000") +
-                this.getValue(this.ID_TRANSACTION_CURRENCY, "986") +
-                this.getValue(this.ID_TRANSACTION_AMOUNT, this.amount) +
-                this.getValue(this.ID_COUNTRY_CODE, "BR") +
+                this.getValue(this.ID_TRANSACTION_CURRENCY, "986");
+
+            // Adicionando verificação para incluir o valor do amount apenas se não for vazio
+            if (this.amount !== "") {
+                payload += this.getValue(this.ID_TRANSACTION_AMOUNT, this.amount);
+            }
+
+            payload += this.getValue(this.ID_COUNTRY_CODE, "BR") +
                 this.getValue(this.ID_MERCHANT_NAME, this.merchantName) +
                 this.getValue(this.ID_MERCHANT_CITY, this.merchantCity) +
                 this.getAdditionalDataFieldTemplate();
