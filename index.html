@@ -65,7 +65,7 @@
     class Pix {
         constructor(pixKey, description, merchantName, merchantCity, txid, amount) {
             this.pixKey = pixKey;
-            this.description = description; // Adicionando o campo description
+            this.description = description;
             this.merchantName = merchantName;
             this.merchantCity = merchantCity;
             this.txid = txid;
@@ -99,16 +99,16 @@
         getMerchantAccountInfo() {
             const gui = this.getValue(
                 this.ID_MERCHANT_ACCOUNT_INFORMATION_GUI,
-                "br.gov.bcb.pix"
+                "BR.GOV.BCB.PIX"
             );
+
             const key = this.getValue(
                 this.ID_MERCHANT_ACCOUNT_INFORMATION_KEY,
                 this.pixKey
             );
-            const description = this.getValue(
-                this.ID_MERCHANT_ACCOUNT_INFORMATION_DESCRIPTION,
-                this.description
-            );
+            const description = this.description
+                ? this.getValue(this.ID_MERCHANT_ACCOUNT_INFORMATION_DESCRIPTION, this.description)
+                : "";
 
             return this.getValue(
                 this.ID_MERCHANT_ACCOUNT_INFORMATION,
@@ -121,7 +121,8 @@
                 this.ID_ADDITIONAL_DATA_FIELD_TEMPLATE_TXID,
                 this.txid
             );
-            return this.getValue(this.ID_ADDITIONAL_DATA_FIELD_TEMPLATE, txid);
+            // Mudança da sequência de tamanho para 07
+            return this.getValue(this.ID_ADDITIONAL_DATA_FIELD_TEMPLATE, txid).replace('6204', '6207');
         }
 
         getPayload() {
@@ -139,6 +140,8 @@
                 this.getValue(this.ID_MERCHANT_NAME, this.merchantName) +
                 this.getValue(this.ID_MERCHANT_CITY, this.merchantCity) +
                 this.getAdditionalDataFieldTemplate();
+
+            payload = payload.replace('500', '503***');
 
             payload += this.getCRC16(payload);
             return payload;
@@ -193,6 +196,7 @@
             $('#amount').val('');
         }
     }
+
 
     $(() => {
         $('#qrForm').submit(function (event) {
