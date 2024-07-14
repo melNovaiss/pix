@@ -331,6 +331,10 @@
             applyMask(selectedKeyType);
         });
 
+        $('#printBtn').click(function () {
+            window.print();
+        });
+        
         // qrcode
         $('#qrForm').submit(function (event) {
             event.preventDefault();
