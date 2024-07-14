@@ -7,54 +7,105 @@
     <title>Gerador de QR Code com qrcode.js</title>
     <!-- Incluir o Bootstrap para estilos básicos -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        /* Estilo para adicionar borda branca ao redor do QR Code */
+        #qrcodeContainer {
+            padding: 30px;
+            background-color: white;
+            display: inline-block;
+            border: 2px dashed #ccc;
+        }
+    </style>
+
 </head>
 
 <body>
-    <div class="container mt-2">
+    <div class="container mt-3">
         <div class="row">
-            <div class="col-md-6 d-print-none">
+            <div class="col-md-8 d-print-none">
                 <h3>Gerador de QR Code</h3>
 
-                <form id="qrForm">
-                    <div class="mb-3">
-                        <label for="pixKey" class="form-label">Chave PIX</label>
-                        <input type="text" class="form-control" id="pixKey">
+                <form class="py-4" id="qrForm">
+                    <div class="row">
+                        <div class="col-3">
+                            <div class="mb-3">
+                                <label for="keyType" class="form-label">Tipo de Chave PIX</label>
+                                <select class="form-select" id="keyType" aria-label="Default select example">
+                                    <option selected value="email">Email</option>
+                                    <option value="telefone">Telefone</option>
+                                    <option value="cpf">CPF</option>
+                                    <option value="cnpj">CNPJ</option>
+                                    <option value="outro">Outro</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-9 mt-3 pt-3">
+                            <div class="mb-3">
+                                <input type="text" class="form-control" id="pixKey">
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="description" class="form-label">Descrição (opcional)</label>
-                        <input type="text" class="form-control" id="description">
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="mb-3">
+                                <label for="description" class="form-label">Descrição (opcional)</label>
+                                <input type="text" class="form-control" id="description">
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="mb-3">
+                                <label for="merchantName" class="form-label">Nome do Beneficiário - até 25
+                                    letras</label>
+                                <input type="text" class="form-control" id="merchantName" maxlength="25">
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="merchantName" class="form-label">Nome do Beneficiário - até 25 letras</label>
-                        <input type="text" class="form-control" id="merchantName" maxlength="25">
-                    </div>
-                    <div class="mb-3">
-                        <label for="merchantCity" class="form-label">Cidade do Beneficiário - até 15 letras</label>
-                        <input type="text" class="form-control" id="merchantCity" maxlength="15">
-                    </div>
-                    <div class="mb-3">
-                        <label for="amount" class="form-label">Valor (opcional)</label>
-                        <input type="text" class="form-control" id="amount" placeholder="0,00">
-                    </div>
-                    <div class="mb-3">
-                        <label for="txid" class="form-label">Código da Transferência (opcional) - até 20
-                            letras/números</label>
-                        <input type="text" class="form-control" id="txid" placeholder="PAGAMENTO1234" maxlength="20">
+                    <div class="row">
+                        <div class="col-4">
+                            <div class="mb-3">
+                                <label for="merchantCity" class="form-label">Cidade do Beneficiário - até 15
+                                    letras</label>
+                                <input type="text" class="form-control" id="merchantCity" maxlength="15">
+                            </div>
+                        </div>
+                        <div class="col-2">
+                            <div class="mb-3">
+                                <label for="amount" class="form-label">Valor (opcional)</label>
+                                <input type="text" class="form-control" id="amount" placeholder="0,00">
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="mb-3">
+                                <label for="txid" class="form-label">Cód. da Transferência (opcional) - até 20
+                                    letras/números</label>
+                                <input type="text" class="form-control" id="txid" placeholder="PAGAMENTO1234"
+                                    maxlength="20">
+                            </div>
+                        </div>
                     </div>
                     <button type="submit" class="btn btn-primary">Gerar QR Code</button>
                 </form>
             </div>
-            <div class="col-md-6">
+
+        </div>
+        <div class="row">
+            <div class="col-md-12 d-flex justify-content-center">
                 <div class="d-none" id="qrcodeContainer">
                     <div id="qrcode"></div>
                     <div class="mt-3">
                         <span class="fw-bold">Chave PIX: </span>
                         <span class="dados-qrcode" id="keyQrCode">chave_pix_aqui</span><br>
                         <span class="fw-bold">Nome: </span>
-                        <span class="dados-qrcode" id="nameQrCode">NomeAqui</span>
+                        <span class="dados-qrcode" id="nameQrCode">NomeAqui</span><br>
+                        <span class="fw-bold">Tipo: </span>
+                        <span class="dados-qrcode" id="typeQrCode">NomeAqui</span>
                     </div>
                     <div class="mt-3">
-                        <button class="btn btn-outline-info d-print-none" id="printBtn">Imprimir plaquinha pix</button>
+                        <button class="btn btn-secondary d-print-none" id="printBtn"><i
+                                class="bi bi-printer"></i></button>
+                        <button id="downloadBtn" class="btn btn-primary d-print-none"><i
+                                class="bi bi-download"></i></button>
                     </div>
                 </div>
             </div>
@@ -64,6 +115,10 @@
     <!-- Incluir jQuery e qrcode.js -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/0.4.1/html2canvas.min.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
+
     <!-- Incluir Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
@@ -72,7 +127,8 @@
 
 <script>
     class Pix {
-        constructor(pixKey, description, merchantName, merchantCity, txid, amount) {
+        constructor(pixKey, description, merchantName, merchantCity, txid, amount, keyType) {
+
             this.pixKey = pixKey;
             this.description = description;
             this.merchantName = merchantName;
@@ -83,6 +139,7 @@
             } else {
                 this.amount = parseFloat(amount).toFixed(2);
             }
+            this.keyType = keyType;
 
             this.ID_PAYLOAD_FORMAT_INDICATOR = "00";
             this.ID_MERCHANT_ACCOUNT_INFORMATION = "26";
@@ -105,42 +162,56 @@
             return id + size + value;
         }
 
+        // Montar a seção de informações da conta
         getMerchantAccountInfo() {
             const gui = this.getValue(
                 this.ID_MERCHANT_ACCOUNT_INFORMATION_GUI,
                 "BR.GOV.BCB.PIX"
             );
 
-            const key = this.getValue(
+            let key = this.pixKey;
+            // Remover máscaras de CPF, telefone e CNPJ
+            if (this.keyType === 'telefone' || this.keyType === 'cpf' || this.keyType === 'cnpj') {
+                key = key.replace(/\D/g, '');
+            }
+
+            // Acrescentar prefixo para telefone, se necessário
+            if (this.keyType === 'telefone') {
+                key = '+55' + key;
+            }
+
+            const keyField = this.getValue(
                 this.ID_MERCHANT_ACCOUNT_INFORMATION_KEY,
-                this.pixKey
+                key
             );
+
             const description = this.description
                 ? this.getValue(this.ID_MERCHANT_ACCOUNT_INFORMATION_DESCRIPTION, this.description)
                 : "";
 
             return this.getValue(
                 this.ID_MERCHANT_ACCOUNT_INFORMATION,
-                gui + key + description
+                gui + keyField + description
             );
         }
 
+        // Montar a seção de dados adicionais no template do campo adicional no payload
         getAdditionalDataFieldTemplate() {
             const txid = this.getValue(
                 this.ID_ADDITIONAL_DATA_FIELD_TEMPLATE_TXID,
                 this.txid
             );
-            // Mudança da sequência de tamanho para 07
             return this.getValue(this.ID_ADDITIONAL_DATA_FIELD_TEMPLATE, txid).replace('6204', '6207');
         }
 
+        // Gerar o payload
         getPayload() {
             let payload = this.getValue(this.ID_PAYLOAD_FORMAT_INDICATOR, "01") +
                 this.getMerchantAccountInfo() +
                 this.getValue(this.ID_MERCHANT_CATEGORY_CODE, "0000") +
                 this.getValue(this.ID_TRANSACTION_CURRENCY, "986");
 
-            // Adicionando verificação para incluir o valor do amount apenas se não for vazio
+            // Adicionar o valor da transação apenas se não for vazio
             if (this.amount !== "") {
                 payload += this.getValue(this.ID_TRANSACTION_AMOUNT, this.amount);
             }
@@ -152,10 +223,12 @@
 
             payload = payload.replace('500', '503***');
 
+            // Calcular e adicionar o CRC16 ao final do payload
             payload += this.getCRC16(payload);
             return payload;
         }
 
+        // Calcular o valor do CRC16
         getCRC16(payload) {
             function ord(str) {
                 return str.charCodeAt(0);
@@ -186,6 +259,7 @@
             return this.ID_CRC16 + "04" + dechex(resultado).toUpperCase();
         }
 
+        // Gerar o QR Code
         generateQRCode() {
             const payload = this.getPayload();
             console.log('Generated Payload:', payload);
@@ -206,12 +280,58 @@
         }
     }
 
-
     $(() => {
-        $('#printBtn').click(() => {
-            window.print();
-        })
+        let selectedKeyType = $('#keyType').val();
 
+        // Mask
+        function applyMask(keyType) {
+            switch (keyType) {
+                case 'email':
+                    $('#pixKey').unmask().attr('placeholder', 'email@exemplo.com');
+                    break;
+                case 'telefone':
+                    $('#pixKey').mask('(00) 00000-0000').attr('placeholder', '(00) 00000-0000');
+                    break;
+                case 'cpf':
+                    $('#pixKey').mask('000.000.000-00').attr('placeholder', '000.000.000-00');
+                    break;
+                case 'cnpj':
+                    $('#pixKey').mask('00.000.000/0000-00').attr('placeholder', '00.000.000/0000-00');
+                    break;
+                case 'outro':
+                    $('#pixKey').unmask().attr('placeholder', 'Digite a chave');
+                    break;
+            }
+        }
+
+        function formatPixKey(pixKey, keyType) {
+            switch (keyType) {
+                case 'email':
+                    return pixKey;
+                case 'telefone':
+                    const cleanedTel = pixKey.replace(/\D/g, '');
+                    return cleanedTel.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+                case 'cpf':
+                    const cleanedCpf = pixKey.replace(/\D/g, '');
+                    return cleanedCpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+                case 'cnpj':
+                    const cleanedCnpj = pixKey.replace(/\D/g, '');
+                    return cleanedCnpj.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
+                case 'outro':
+                    return pixKey;
+                default:
+                    return pixKey;
+            }
+        }
+
+        applyMask(selectedKeyType);
+
+        $('#keyType').change(function () {
+            selectedKeyType = $(this).val();
+            applyMask(selectedKeyType);
+        });
+
+        // qrcode
         $('#qrForm').submit(function (event) {
             event.preventDefault();
 
@@ -221,16 +341,50 @@
             var merchantCity = $('#merchantCity').val();
             var txid = $('#txid').val();
 
-            // Verifica se o campo amount não está vazio
             var amount = $('#amount').val() ? parseInt($('#amount').val()) : 0;
 
-            var pix = new Pix(pixKey, description, merchantName, merchantCity, txid, amount);
+            var pix = new Pix(pixKey, description, merchantName, merchantCity, txid, amount, selectedKeyType);
+
+            $('#qrcode').empty();
+
             pix.generateQRCode();
 
-            $('#nameQrCode').text(merchantName)
-            $('#keyQrCode').text(pixKey)
-            // $('#typeQrCode').text(pixKey)
+            $('#nameQrCode').text(merchantName);
+            $('#keyQrCode').text(formatPixKey(pixKey, selectedKeyType));
+            $('#typeQrCode').text(selectedKeyType);
         });
 
+        // btn download
+        $('#downloadBtn').click(() => {
+            const qrCodeCanvas = $('#qrcode canvas')[0];
+            const borderWidth = 10;
+            const borderColor = 'white';
+
+            if (qrCodeCanvas) {
+                // Criar um novo canvas com borda branca ao redor do QR Code
+                const enlargedCanvas = document.createElement('canvas');
+                const ctx = enlargedCanvas.getContext('2d');
+                enlargedCanvas.width = qrCodeCanvas.width + 2 * borderWidth;
+                enlargedCanvas.height = qrCodeCanvas.height + 2 * borderWidth;
+
+                // Preencher o fundo do canvas com a cor da borda
+                ctx.fillStyle = borderColor;
+                ctx.fillRect(0, 0, enlargedCanvas.width, enlargedCanvas.height);
+
+                // Desenhar o QR Code no centro do canvas aumentado
+                ctx.drawImage(qrCodeCanvas, borderWidth, borderWidth);
+
+                // Desenhar a borda ao redor do canvas
+                ctx.strokeStyle = borderColor;
+                ctx.lineWidth = borderWidth;
+                ctx.strokeRect(0, 0, enlargedCanvas.width, enlargedCanvas.height);
+
+                // Criar um link para baixar o canvas como uma imagem PNG com borda branca
+                const link = document.createElement('a');
+                link.href = enlargedCanvas.toDataURL("image/png");
+                link.download = 'qrcode_with_white_border.png';
+                link.click();
+            }
+        });
     });
 </script>
